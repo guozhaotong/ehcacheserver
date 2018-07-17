@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache updateCheck="false">
+
+    <!-- 配置提供者
+        1、peerDiscovery，提供者方式，有两种方式：自动发现(automatic)、手动配置(manual)
+        2、rmiUrls，手动方式时提供者的地址，多个的话用|隔开 -->
+    <cacheManagerPeerProviderFactory
+            class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
+            properties="peerDiscovery=automatic, multicastGroupAddress=230.0.0.1,
+            multicastGroupPort=4446, timeToLive=32"/>
+
+    <!-- 配置监听器
+        1、hostName 主机地址
+        2、port 端口
+        3、socketTimeoutMillis socket子模块的超时时间，默认是2000ms -->
+    <cacheManagerPeerListenerFactory
+            class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"
+            properties="hostName=127.0.0.1, port=40002, socketTimeoutMillis=6000"/>
+
+    <!--
+           name:缓存名称。
+           maxElementsInMemory：缓存最大个数。
+           eternal:对象是否永久有效，一但设置了，timeout将不起作用。
+           timeToIdleSeconds：设置对象在失效前的允许闲置时间（单位：秒）。仅当eternal=false对象不是永久有效时使用，可选属性，默认值是0，也就是可闲置时间无穷大。
+           timeToLiveSeconds：设置对象在失效前允许存活时间（单位：秒）。最大时间介于创建时间和失效时间之间。仅当eternal=false对象不是永久有效时使用，默认是0.，也就是对象存活时间无穷大。
+           overflowToDisk：当内存中对象数量达到maxElementsInMemory时，Ehcache将会对象写到磁盘中。
+           diskSpoolBufferSizeMB：这个参数设置DiskStore（磁盘缓存）的缓存区大小。默认是30MB。每个Cache都应该有自己的一个缓冲区。
+           maxElementsOnDisk：硬盘最大缓存个数。
+           diskPersistent：是否缓存虚拟机重启期数据 Whether the disk store persists between restarts of the Virtual Machine. The default value is false.
+           diskExpiryThreadIntervalSeconds：磁盘失效线程运行时间间隔，默认是120秒。
+           memoryStoreEvictionPolicy：当达到maxElementsInMemory限制时，Ehcache将会根据指定的策略去清理内存。默认策略是LRU（最近最少使用）。你可以设置为FIFO（先进先出）或是LFU（较少使用）。
+           clearOnFlush：内存数量最大时是否清除。
+        -->
+    <cache name="ehcache001"
+           maxBytesLocalHeap="1G"
+           eternal="false"
+           overflowToDisk="false"
+           timeToIdleSeconds="86400"
+           timeToLiveSeconds="86400"
+           memoryStoreEvictionPolicy="LFU"
+           transactionalMode="off">
+
+        <sizeOfPolicy maxDepth="100000" maxDepthExceededBehavior="abort"/>
+        <!-- 配置缓存事件监听器
+             replicateAsynchronously  操作是否异步,默认值为true.
+             replicatePuts 添加操作是否同步到集群内的其他缓存,默认为true.
+             replicateUpdates 更新操作是否同步到集群内的其他缓存,默认为true.
+             replicateUpdatesViaCopy 更新之后的对象是否复制到集群中的其他缓存(true);
+             replicateRemovals 删除操作是否同步到集群内的其他缓存,默认为true.
+         -->
+        <cacheEventListenerFactory
+                class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+                properties="
+                replicateAsynchronously=true,
+                replicatePuts=true,
+                replicateUpdates=true,
+                replicateUpdatesViaCopy=true,
+                replicateRemovals=true "/>
+
+        <!-- 初始化缓存，以及自动设置-->
+        <bootstrapCacheLoaderFactory class="net.sf.ehcache.distribution.RMIBootstrapCacheLoaderFactory"/>
+    </cache>
+
+</ehcache>
